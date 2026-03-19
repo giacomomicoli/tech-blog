@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+#### Infrastructure
+
+- Moved `env_file` from base compose to dev-only compose to prevent deploy failure when `.env`
+  is absent on the production server
+
 ## [1.0.0] - 2026-03-20
 
 ### Added
