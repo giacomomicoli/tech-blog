@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "home": "Home",
+    "categories": "Categorie",
+    "aboutBlog": "Il Blog",
+    "aboutMe": "Chi Sono",
+    "noCategories": "Nessuna categoria"
+  },
+  "home": {
+    "latestPosts": "Ultimi Articoli",
+    "heroSection": "In Evidenza",
+    "topRead": "Più Letti",
+    "loading": "Caricamento articoli...",
+    "noPosts": "Nessun articolo pubblicato."
+  },
+  "pagination": {
+    "previous": "Precedente",
+    "next": "Successivo",
+    "page": "Pagina {page}"
+  },
+  "post": {
+    "backToBlog": "← Torna al Blog",
+    "readMore": "Leggi Tutto →",
+    "by": "di",
+    "minRead": "min di lettura",
+    "notFound": "Articolo non trovato",
+    "relatedPosts": "Articoli Correlati",
+    "tweetEmbedsTitle": "Embed interattivi dei tweet",
+    "tweetEmbedsDescription": "I tweet vengono mostrati in modalita leggera per default. Abilita il widget di Twitter solo quando vuoi l'embed interattivo completo.",
+    "tweetEmbedsEnable": "Abilita tweet interattivi",
+    "tweetEmbedsDisable": "Disabilita tweet interattivi",
+    "tweetEmbedsLoading": "Caricamento widget Twitter...",
+    "tweetEmbedsBlocked": "I widget di Twitter sono stati bloccati dal browser o da un'estensione. L'embed statico resta disponibile."
+  },
+  "category": {
+    "breadcrumb": "Blog",
+    "noPosts": "Nessun articolo in questa categoria.",
+    "loading": "Caricamento articoli..."
+  },
+  "tag": {
+    "breadcrumb": "Blog",
+    "noPosts": "Nessun articolo con questo tag.",
+    "loading": "Caricamento articoli..."
+  },
+  "toc": {
+    "title": "Indice"
+  },
+  "footer": {
+    "text": "© {year} TECH.md Blog - FakeJack - Powered by Notion."
+  },
+  "language": {
+    "label": "Lingua",
+    "switch": "Cambia lingua"
+  }
+}
