@@ -1,0 +1,106 @@
+services:
+  backend:
+    ports: []
+    env_file: []
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - NOTION_API_VERSION=2025-09-03
+    secrets:
+      - source: techblog_notion_api_key
+        target: notion_api_key
+      - source: techblog_notion_database_id
+        target: notion_database_id
+      - source: techblog_notion_data_source_id
+        target: notion_data_source_id
+      - source: techblog_notion_pages_data_source_id
+        target: notion_pages_data_source_id
+      - source: techblog_cache_invalidate_secret
+        target: cache_invalidate_secret
+    networks:
+      - proxy-net
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 256M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.techblog-api.entrypoints=https"
+        - "traefik.http.routers.techblog-api.rule=Host(`${SITE_DOMAIN:-tech.fakejack.dev}`) && (PathPrefix(`/api`) || Path(`/health`))"
+        - "traefik.http.routers.techblog-api.tls.certresolver=http"
+        - "traefik.http.routers.techblog-api.service=techblog-api"
+        - "traefik.http.routers.techblog-api.middlewares=techblog-headers@swarm,techblog-compress@swarm"
+        - "traefik.http.services.techblog-api.loadbalancer.server.port=8000"
+
+  frontend:
+    ports: []
+    env_file: []
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://tech.fakejack.dev}
+    networks:
+      - proxy-net
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 256M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.techblog.entrypoints=https"
+        - "traefik.http.routers.techblog.rule=Host(`${SITE_DOMAIN:-tech.fakejack.dev}`)"
+        - "traefik.http.routers.techblog.tls.certresolver=http"
+        - "traefik.http.routers.techblog.service=techblog"
+        - "traefik.http.routers.techblog.priority=1"
+        - "traefik.http.routers.techblog.middlewares=techblog-headers@swarm,techblog-compress@swarm"
+        - "traefik.http.services.techblog.loadbalancer.server.port=3000"
+        # Shared middlewares (defined once, used by both routers)
+        - "traefik.http.middlewares.techblog-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+        - "traefik.http.middlewares.techblog-headers.headers.customresponseheaders.X-Frame-Options=DENY"
+        - "traefik.http.middlewares.techblog-headers.headers.customresponseheaders.Referrer-Policy=strict-origin-when-cross-origin"
+        - "traefik.http.middlewares.techblog-compress.compress=true"
+
+  redis:
+    ports: []
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 128M
+
+secrets:
+  techblog_notion_api_key:
+    external: true
+  techblog_notion_database_id:
+    external: true
+  techblog_notion_data_source_id:
+    external: true
+  techblog_notion_pages_data_source_id:
+    external: true
+  techblog_cache_invalidate_secret:
+    external: true
+
+volumes:
+  redis-data:
+
+networks:
+  proxy-net:
+    external: true

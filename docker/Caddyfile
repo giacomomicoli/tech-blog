@@ -1,0 +1,36 @@
+# Dev-only reverse proxy (production uses Traefik via Docker Swarm labels).
+# Caddy listens on HTTP :80 by default for local development.
+
+:80 {
+	# API requests → backend
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Health endpoint → backend
+	handle /health {
+		reverse_proxy backend:8000
+	}
+
+	# Everything else → frontend (Nuxt SSR)
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	# Compression
+	encode gzip zstd
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Logs
+	log {
+		output stdout
+		format console
+	}
+}
