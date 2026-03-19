@@ -1,7 +1,6 @@
 services:
   backend:
     ports: []
-    env_file: []
     environment:
       - REDIS_URL=redis://redis:6379/0
       - NOTION_API_VERSION=2025-09-03
@@ -40,7 +39,6 @@ services:
 
   frontend:
     ports: []
-    env_file: []
     environment:
       - BACKEND_URL=http://backend:8000
       - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://tech.fakejack.dev}

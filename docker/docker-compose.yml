@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${BACKEND_PORT:-8000}:8000"
-    env_file:
-      - ../.env
     networks:
       - blog-net
     healthcheck:
@@ -26,8 +24,6 @@ services:
         - NUXT_THEME=${NUXT_THEME:-tech-dark}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-    env_file:
-      - ../.env
     environment:
       - BACKEND_URL=http://backend:8000
     networks:
