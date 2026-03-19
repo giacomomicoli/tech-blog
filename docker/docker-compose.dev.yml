@@ -12,6 +12,8 @@ services:
       - blog-net
 
   backend:
+    env_file:
+      - ../.env
     depends_on:
       redis:
         condition: service_healthy
@@ -20,6 +22,8 @@ services:
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
+    env_file:
+      - ../.env
     depends_on:
       backend:
         condition: service_healthy
