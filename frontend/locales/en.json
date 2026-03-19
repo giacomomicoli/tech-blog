@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "aboutBlog": "About This Blog",
+    "aboutMe": "About Me",
+    "noCategories": "No categories yet"
+  },
+  "home": {
+    "latestPosts": "Latest Articles",
+    "heroSection": "Featured",
+    "topRead": "Top Read",
+    "loading": "Loading posts...",
+    "noPosts": "No posts published yet."
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page}"
+  },
+  "post": {
+    "backToBlog": "← Back to Blog",
+    "readMore": "Read More →",
+    "by": "by",
+    "minRead": "min read",
+    "notFound": "Post not found",
+    "relatedPosts": "Related Articles",
+    "tweetEmbedsTitle": "Interactive tweet embeds",
+    "tweetEmbedsDescription": "Tweets are shown in lightweight mode by default. Enable the Twitter widget only when you want the full interactive embed.",
+    "tweetEmbedsEnable": "Enable interactive tweets",
+    "tweetEmbedsDisable": "Disable interactive tweets",
+    "tweetEmbedsLoading": "Loading Twitter widgets...",
+    "tweetEmbedsBlocked": "Twitter widgets were blocked by your browser or an extension. The static embed is still available."
+  },
+  "category": {
+    "breadcrumb": "Blog",
+    "noPosts": "No posts in this category.",
+    "loading": "Loading posts..."
+  },
+  "tag": {
+    "breadcrumb": "Blog",
+    "noPosts": "No posts with this tag.",
+    "loading": "Loading posts..."
+  },
+  "toc": {
+    "title": "Table of Contents"
+  },
+  "footer": {
+    "text": "© {year} TECH.md Blog - FakeJack - Powered by Notion."
+  },
+  "language": {
+    "label": "Language",
+    "switch": "Switch language"
+  }
+}

@@ -1,0 +1,39 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+.nuxt/
+.output/
+.data/
+.nitro/
+.cache/
+
+# Docker
+docker/volumes/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI tools
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
