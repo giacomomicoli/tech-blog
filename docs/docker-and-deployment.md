@@ -254,7 +254,7 @@ Runs on push to `main` only. Two sequential jobs:
 2. Logs in to ghcr.io on the VPS (using forwarded `GITHUB_TOKEN`)
 3. Pulls latest code: `git fetch origin main && git reset --hard origin/main`
 4. Deploys stack with `IMAGE_TAG` set to the git SHA:
-   `docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml tech.md`
+   `docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml techblog`
 
 ### Container Registry
 
@@ -297,7 +297,7 @@ set -euo pipefail
    - Skips with warning if value is empty
    - Removes existing `techblog_` prefixed secret (`docker secret rm`, ignores errors)
    - Creates new secret: `echo "$value" | docker secret create "techblog_$secret" -`
-3. Deploys stack: `docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml tech.md`
+3. Deploys stack: `docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml techblog`
 
 Docker secrets are immutable — the script removes and recreates them on each deploy.
 
@@ -352,7 +352,7 @@ COMPOSE_DEV = cd docker && docker compose -f docker-compose.yml -f docker-compos
 | `dev-down` | `$(COMPOSE_DEV) down` | Stop dev containers |
 | `dev-rebuild` | `$(COMPOSE_DEV) down -v && $(COMPOSE_DEV) up -d --build` | Full rebuild, clears volumes |
 | `prod-deploy` | `cd docker && bash deploy.sh` | Create secrets + deploy Swarm stack |
-| `prod-down` | `docker stack rm tech.md` | Remove Swarm stack |
+| `prod-down` | `docker stack rm techblog` | Remove Swarm stack |
 | `logs` | `$(COMPOSE_DEV) logs -f` | Follow all service logs |
 | `logs-backend` | `$(COMPOSE_DEV) logs -f backend` | Follow backend logs |
 | `logs-frontend` | `$(COMPOSE_DEV) logs -f frontend` | Follow frontend logs |
@@ -394,7 +394,7 @@ Internet
 Traefik (shared Swarm stack, /var/www/traefik/)
   ├── opencloud.fakejack.dev  → OpenCloud (docker compose)
   ├── gaming.fakejack.dev     → Gaming Blog (Swarm stack "blog")
-  ├── tech.fakejack.dev       → Tech Blog (Swarm stack "tech.md")
+  ├── tech.fakejack.dev       → Tech Blog (Swarm stack "techblog")
   └── traefik-opencloud.fakejack.dev → Traefik Dashboard
 ```
 
