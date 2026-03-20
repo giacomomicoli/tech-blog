@@ -38,7 +38,7 @@ services:
 
   frontend:
     environment:
-      - BACKEND_URL=http://backend:8000
+      - NUXT_BACKEND_URL=http://techblog-api-internal:8000
       - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://tech.fakejack.dev}
     networks:
       - proxy-net

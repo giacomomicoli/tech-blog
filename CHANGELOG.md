@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   used for Docker overlay networks)
 - Moved `ports` from base compose to dev-only compose to avoid Swarm ingress port conflicts
   with the gaming blog (both services share port 3000/8000 in Swarm's routing mesh)
+- Fixed Docker Swarm DNS collision between blog stacks: both stacks define a `backend` service
+  on the shared `proxy-net`, causing Docker DNS round-robin between the two backends and
+  intermittent SSR 404 errors. Added `techblog-api-internal` network alias on `blog-net` and
+  changed frontend SSR env from `BACKEND_URL` to `NUXT_BACKEND_URL=http://techblog-api-internal:8000`
+  (Nuxt 3 only reads `NUXT_`-prefixed env vars at runtime)
 
 #### Frontend
 
