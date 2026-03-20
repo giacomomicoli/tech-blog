@@ -12,6 +12,8 @@ services:
       - blog-net
 
   backend:
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
     env_file:
       - ../.env
     depends_on:
@@ -22,6 +24,8 @@ services:
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
     env_file:
       - ../.env
     depends_on:
@@ -38,6 +42,8 @@ services:
     command: npx nuxt dev --host 0.0.0.0
 
   redis:
+    ports:
+      - "6379:6379"
     command: redis-server --save "" --appendonly no
 
 networks:

@@ -1,6 +1,5 @@
 services:
   backend:
-    ports: []
     environment:
       - REDIS_URL=redis://redis:6379/0
       - NOTION_API_VERSION=2025-09-03
@@ -38,7 +37,6 @@ services:
         - "traefik.http.services.techblog-api.loadbalancer.server.port=8000"
 
   frontend:
-    ports: []
     environment:
       - BACKEND_URL=http://backend:8000
       - NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL:-https://tech.fakejack.dev}
@@ -71,7 +69,6 @@ services:
         - "traefik.http.middlewares.techblog-compress.compress=true"
 
   redis:
-    ports: []
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   is absent on the production server
 - Changed Docker Swarm stack name from `tech.md` to `techblog` (dots are invalid in DNS names
   used for Docker overlay networks)
+- Moved `ports` from base compose to dev-only compose to avoid Swarm ingress port conflicts
+  with the gaming blog (both services share port 3000/8000 in Swarm's routing mesh)
 
 ## [1.0.0] - 2026-03-20
 
