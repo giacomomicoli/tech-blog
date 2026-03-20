@@ -20,7 +20,7 @@ prod-deploy:
 	cd docker && bash deploy.sh
 
 prod-down:
-	docker stack rm tech.md
+	docker stack rm techblog
 
 # ── Logs ─────────────────────────────────────────────────────
 

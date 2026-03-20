@@ -35,10 +35,10 @@ for secret in notion_api_key notion_database_id notion_data_source_id notion_pag
 done
 
 echo ""
-echo "==> Deploying tech.md stack to Docker Swarm..."
-docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml tech.md
+echo "==> Deploying techblog stack to Docker Swarm..."
+docker stack deploy --with-registry-auth -c docker-compose.yml -c docker-compose.prod.yml techblog
 
 echo ""
 echo "Done. Check status with:"
-echo "  docker stack services tech.md"
-echo "  docker stack ps tech.md"
+echo "  docker stack services techblog"
+echo "  docker stack ps techblog"
