@@ -38,7 +38,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     backendUrl: process.env.BACKEND_URL || 'http://backend:8000',
     public: {
-      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:8000',
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL ?? '',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
       defaultLocale: process.env.DEFAULT_LOCALE || 'it',
       supportedLocales: process.env.SUPPORTED_LOCALES || 'it,en',
