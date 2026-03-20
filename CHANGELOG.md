@@ -18,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Moved `ports` from base compose to dev-only compose to avoid Swarm ingress port conflicts
   with the gaming blog (both services share port 3000/8000 in Swarm's routing mesh)
 
+#### Frontend
+
+- Fixed client-side API calls using `http://localhost:8000` in production — changed
+  `NUXT_PUBLIC_BACKEND_URL` default from `'http://localhost:8000'` to `''` (empty string) so
+  the browser uses relative URLs routed through Traefik, matching the gaming blog pattern
+
+#### Backend
+
+- Fixed incorrect Notion data source IDs (`NOTION_DATA_SOURCE_ID` and
+  `NOTION_PAGES_DATA_SOURCE_ID`) that caused wrong content to be served
+
 ## [1.0.0] - 2026-03-20
 
 ### Added
