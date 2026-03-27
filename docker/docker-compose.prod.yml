@@ -1,7 +1,6 @@
 services:
   backend:
     environment:
-      - REDIS_URL=redis://redis:6379/0
       - NOTION_API_VERSION=2025-09-03
     secrets:
       - source: techblog_notion_api_key
@@ -14,6 +13,8 @@ services:
         target: notion_pages_data_source_id
       - source: techblog_cache_invalidate_secret
         target: cache_invalidate_secret
+      - source: techblog_redis_password
+        target: redis_password
     networks:
       - proxy-net
     deploy:
@@ -71,7 +72,15 @@ services:
   redis:
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    command: sh -c 'redis-server --appendonly yes --requirepass "$$(cat /run/secrets/redis_password)"'
+    secrets:
+      - source: techblog_redis_password
+        target: redis_password
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli --no-auth-warning ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     deploy:
       replicas: 1
       restart_policy:
@@ -91,6 +100,8 @@ secrets:
   techblog_notion_pages_data_source_id:
     external: true
   techblog_cache_invalidate_secret:
+    external: true
+  techblog_redis_password:
     external: true
 
 volumes:

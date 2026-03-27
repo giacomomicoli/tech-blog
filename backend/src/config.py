@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import quote, urlparse, urlunparse
 
 from pydantic_settings import BaseSettings
 
@@ -41,6 +42,14 @@ class Settings(BaseSettings):
             secret = _read_secret(field)
             if secret:
                 object.__setattr__(self, field, secret)
+
+        redis_password = _read_secret("redis_password")
+        if redis_password:
+            parsed = urlparse(self.redis_url)
+            port = parsed.port or 6379
+            encoded_password = quote(redis_password, safe="")
+            authed = parsed._replace(netloc=f":{encoded_password}@{parsed.hostname}:{port}")
+            object.__setattr__(self, "redis_url", urlunparse(authed))
 
 
 settings = Settings()

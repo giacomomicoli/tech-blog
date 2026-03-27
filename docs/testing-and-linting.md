@@ -8,7 +8,7 @@
 
 | Layer | Framework | Runner | Count |
 |-------|-----------|--------|-------|
-| Backend | pytest + pytest-asyncio + fakeredis | `make test-backend` | 72 tests |
+| Backend | pytest + pytest-asyncio + fakeredis | `make test-backend` | 74 tests |
 | Frontend | vitest + @vue/test-utils + happy-dom | `make test-frontend` | 22 tests |
 | Linting | ruff (check + format) | `make lint` | — |
 
@@ -134,6 +134,12 @@ def test_get_post(self, mock_client, client):
 | `TestCacheOperations` | 7 | Set/get, missing key, overwrite, complex data, invalidation patterns |
 
 Uses `fakeredis` for real Redis operations without a running Redis server.
+
+#### `test_config.py` — Settings Tests
+
+| Class | Tests | What It Covers |
+|-------|-------|---------------|
+| `TestSettings` | 2 | Redis password secret injection into `redis_url`, unchanged URL when secret is missing |
 
 **Key pattern examples tested**:
 ```python

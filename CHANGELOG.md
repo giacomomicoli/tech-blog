@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+#### Infrastructure
+
+- Hardened production Redis configuration to address BSI/CERT-Bund exposure reports: added
+  password authentication via namespaced Docker secret (`techblog_redis_password`), switched
+  Redis command to `--requirepass`, and updated healthcheck to authenticated `redis-cli ping`
+- Added `REDIS_PASSWORD` to `.env.example` and updated `docker/deploy.sh` to create/update
+  the namespaced `techblog_redis_password` secret during manual deployments
+
+#### Backend
+
+- Added runtime Redis URL auth injection from `/run/secrets/redis_password` in
+  `backend/src/config.py` (URL-encoded password), plus tests covering both secret-present and
+  secret-missing scenarios
+
 ### Fixed
 
 #### Infrastructure
