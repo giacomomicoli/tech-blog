@@ -131,7 +131,8 @@ Middlewares (defined in frontend labels, referenced by both routers):
 
 - **Ports**: Removed (only accessible via Traefik)
 - **env_file**: Removed (secrets used instead)
-- **Environment**: `REDIS_URL=redis://redis:6379/0`, `NOTION_API_VERSION=2025-09-03`
+- **Environment**: `NOTION_API_VERSION=2025-09-03` (Redis URL is built at runtime in
+  `config.py` using `REDIS_URL` + `/run/secrets/redis_password` when available)
 - **Networks**: Added `proxy-net` (for Traefik discovery)
 - **Secrets** (namespaced with `techblog_` prefix, mapped to `/run/secrets/{name}`):
   - `techblog_notion_api_key` → `notion_api_key`
@@ -139,6 +140,7 @@ Middlewares (defined in frontend labels, referenced by both routers):
   - `techblog_notion_data_source_id` → `notion_data_source_id`
   - `techblog_notion_pages_data_source_id` → `notion_pages_data_source_id`
   - `techblog_cache_invalidate_secret` → `cache_invalidate_secret`
+  - `techblog_redis_password` → `redis_password`
 - **Deploy**: 1 replica, rolling update (parallelism 1, 10s delay), restart on-failure (max 3), memory limit 256M
 - **Traefik labels**: `techblog-api` router on HTTPS entrypoint with TLS cert resolver
 
@@ -159,7 +161,9 @@ Middlewares (defined in frontend labels, referenced by both routers):
 
 - **Ports**: Removed
 - **Volume**: `redis-data:/data` (persistent storage)
-- **Command**: `redis-server --appendonly yes` (AOF persistence enabled)
+- **Command**: `redis-server --appendonly yes --requirepass <secret>` (AOF persistence + password auth via Docker secret)
+- **Secrets**: `techblog_redis_password` mounted as `/run/secrets/redis_password`
+- **Health check**: `REDISCLI_AUTH=$(cat /run/secrets/redis_password) redis-cli --no-auth-warning ping` — 10s interval, 3s timeout, 3 retries
 - **Deploy**: 1 replica, restart on-failure (max 3), memory limit 128M
 
 ### Secrets
@@ -175,6 +179,7 @@ maps the namespaced Docker secret to the expected path inside the container.
 | `techblog_notion_data_source_id` | `/run/secrets/notion_data_source_id` | `NOTION_DATA_SOURCE_ID` |
 | `techblog_notion_pages_data_source_id` | `/run/secrets/notion_pages_data_source_id` | `NOTION_PAGES_DATA_SOURCE_ID` |
 | `techblog_cache_invalidate_secret` | `/run/secrets/cache_invalidate_secret` | `CACHE_INVALIDATE_SECRET` |
+| `techblog_redis_password` | `/run/secrets/redis_password` | `REDIS_PASSWORD` |
 
 The backend's `config.py` reads secrets from `/run/secrets/` in `model_post_init` and they
 override env var values.
@@ -296,7 +301,7 @@ set -euo pipefail
 
 1. Sources `../.env` file (exits with error if missing)
 2. For each secret (`notion_api_key`, `notion_database_id`, `notion_data_source_id`,
-   `notion_pages_data_source_id`, `cache_invalidate_secret`):
+   `notion_pages_data_source_id`, `cache_invalidate_secret`, `redis_password`):
    - Converts lowercase name to uppercase env var
    - Skips with warning if value is empty
    - Removes existing `techblog_` prefixed secret (`docker secret rm`, ignores errors)
@@ -415,7 +420,7 @@ Traefik (shared Swarm stack, /var/www/traefik/)
 | Network driver | bridge | overlay (Swarm) |
 | Reverse proxy | Caddy (localhost:80) | Traefik (shared, ports 80/443) |
 | Ports exposed | Caddy:80, backend:8000, frontend:3000, redis:6379 | Traefik only (external) |
-| Redis persistence | Off (in-memory) | AOF enabled |
+| Redis persistence | Off (in-memory) | AOF enabled + password auth |
 | Hot reload | Yes (volume mounts) | No (built into image) |
 | Secrets | `.env` file | Docker Swarm secrets (`techblog_*` prefix) |
 | Replicas | 1 each | 1 each |

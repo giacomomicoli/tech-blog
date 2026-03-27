@@ -18,7 +18,7 @@ source "$ENV_FILE"
 set +a
 
 echo "==> Creating/updating Docker secrets..."
-for secret in notion_api_key notion_database_id notion_data_source_id notion_pages_data_source_id cache_invalidate_secret; do
+for secret in notion_api_key notion_database_id notion_data_source_id notion_pages_data_source_id cache_invalidate_secret redis_password; do
   # Convert to uppercase env var name
   env_var=$(echo "$secret" | tr '[:lower:]' '[:upper:]')
   value="${!env_var:-}"

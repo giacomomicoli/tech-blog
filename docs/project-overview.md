@@ -107,6 +107,7 @@ Stores static content pages (About This Blog, About Me, etc.). Queried by slug.
 | `NOTION_PAGES_DATA_SOURCE_ID` | No | `""` | Pages data source ID for static pages |
 | `NOTION_API_VERSION` | No | `2025-09-03` | Notion API version header |
 | `REDIS_URL` | No | `redis://redis:6379/0` | Redis connection string |
+| `REDIS_PASSWORD` | No | `change_me_to_a_random_string` | Redis auth password used to create `techblog_redis_password` Docker secret in production |
 | `CACHE_TTL_SECONDS` | No | `300` | Cache entry TTL in seconds |
 | `CACHE_INVALIDATE_SECRET` | Yes | — | Bearer token for `POST /api/cache/invalidate` |
 | `SYNC_INTERVAL_MINUTES` | No | `5` | Background sync polling interval |
@@ -119,6 +120,8 @@ Stores static content pages (About This Blog, About Me, etc.). Queried by slug.
 | `DEFAULT_LOCALE` | No | `it` | Default locale for the site |
 
 In production, sensitive variables are stored as Docker Swarm secrets at `/run/secrets/{field_name}` and take priority over environment variables.
+When `/run/secrets/redis_password` is present, the backend injects it into `REDIS_URL` at
+runtime.
 
 ## API Endpoints
 

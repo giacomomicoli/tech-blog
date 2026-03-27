@@ -48,6 +48,8 @@ All settings use Pydantic v2 `BaseSettings`. Values are read from `.env` file fi
 Docker secrets at `/run/secrets/{field_name}` override them in `model_post_init`.
 
 ```python
+from urllib.parse import quote, urlparse, urlunparse
+
 class Settings(BaseSettings):
     notion_api_key: str = ""
     notion_database_id: str = ""
@@ -65,10 +67,24 @@ class Settings(BaseSettings):
     @property
     def parsed_locales(self) -> list[str]:
         return [loc.strip() for loc in self.supported_locales.split(",") if loc.strip()]
+
+    def model_post_init(self, __context):
+        ...
+        redis_password = _read_secret("redis_password")
+        if redis_password:
+            parsed = urlparse(self.redis_url)
+            port = parsed.port or 6379
+            encoded_password = quote(redis_password, safe="")
+            authed = parsed._replace(netloc=f":{encoded_password}@{parsed.hostname}:{port}")
+            object.__setattr__(self, "redis_url", urlunparse(authed))
 ```
 
 Fields checked for Docker secrets: `notion_api_key`, `notion_database_id`,
-`notion_data_source_id`, `cache_invalidate_secret`, `notion_pages_data_source_id`.
+`notion_data_source_id`, `cache_invalidate_secret`, `notion_pages_data_source_id`,
+`redis_password`.
+
+If `/run/secrets/redis_password` exists, it is URL-encoded and injected into `redis_url`
+at runtime so Redis auth works without storing credentials directly in `REDIS_URL`.
 
 Singleton: `settings = Settings()` at module level.
 
