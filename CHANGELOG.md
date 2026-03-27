@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Security
+## [1.0.2] - 2026-03-27
+
+### Fixed
 
 #### Infrastructure
 
@@ -16,17 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Redis command to `--requirepass`, and updated healthcheck to authenticated `redis-cli ping`
 - Added `REDIS_PASSWORD` to `.env.example` and updated `docker/deploy.sh` to create/update
   the namespaced `techblog_redis_password` secret during manual deployments
-
-#### Backend
-
-- Added runtime Redis URL auth injection from `/run/secrets/redis_password` in
-  `backend/src/config.py` (URL-encoded password), plus tests covering both secret-present and
-  secret-missing scenarios
-
-### Fixed
-
-#### Infrastructure
-
 - Moved `env_file` from base compose to dev-only compose to prevent deploy failure when `.env`
   is absent on the production server
 - Changed Docker Swarm stack name from `tech.md` to `techblog` (dots are invalid in DNS names
@@ -38,15 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   intermittent SSR 404 errors. Added `techblog-api-internal` network alias on `blog-net` and
   changed frontend SSR env from `BACKEND_URL` to `NUXT_BACKEND_URL=http://techblog-api-internal:8000`
   (Nuxt 3 only reads `NUXT_`-prefixed env vars at runtime)
-
-#### Frontend
-
 - Fixed client-side API calls using `http://localhost:8000` in production — changed
   `NUXT_PUBLIC_BACKEND_URL` default from `'http://localhost:8000'` to `''` (empty string) so
   the browser uses relative URLs routed through Traefik, matching the gaming blog pattern
 
 #### Backend
 
+- Hardened backend Redis connection handling by injecting URL-encoded Redis credentials from
+  `/run/secrets/redis_password` into `redis_url` at runtime, with tests for both secret-present
+  and secret-missing scenarios
 - Fixed incorrect Notion data source IDs (`NOTION_DATA_SOURCE_ID` and
   `NOTION_PAGES_DATA_SOURCE_ID`) that caused wrong content to be served
 
