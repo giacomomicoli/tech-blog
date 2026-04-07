@@ -53,7 +53,7 @@ export default defineNuxtConfig({
       title: 'TECH.md',
       titleTemplate: '%s | TECH.md',
       meta: [
-        { name: 'description', content: 'TECH.md — A blog powered by Notion' },
+        { name: 'description', content: 'TECH.md is a multilingual Notion-powered tech blog focused on clear writing, practical insights, and curated developer content.' },
       ],
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },

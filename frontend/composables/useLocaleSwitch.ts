@@ -6,6 +6,8 @@ interface ResolveLocaleSwitchPathOptions {
   routeParams: RouteParams
   sameRoutePath: string
   fallbackPath: string
+  targetLocale: string
+  alternates?: Record<string, string>
 }
 
 function getSingleParam(value: string | string[] | undefined): string | null {
@@ -38,8 +40,14 @@ export async function resolveLocaleSwitchPath({
   routeParams,
   sameRoutePath,
   fallbackPath,
+  targetLocale,
+  alternates,
 }: ResolveLocaleSwitchPathOptions): Promise<string> {
   const normalizedPath = stripLocalePrefix(currentPath)
+
+  if (alternates?.[targetLocale]) {
+    return alternates[targetLocale]
+  }
 
   if (normalizedPath.startsWith('/blog/')) {
     return getSingleParam(routeParams.slug) ? fallbackPath : sameRoutePath

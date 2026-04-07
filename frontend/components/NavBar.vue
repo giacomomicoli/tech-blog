@@ -5,7 +5,7 @@ const route = useRoute()
 const { locale, locales, t } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
-const { getCategories } = useApi()
+const { getCategories, getPage, getPost } = useApi()
 
 const categoriesKey = computed(() => `nav-categories-${locale.value}`)
 const { data: categories } = await useAsyncData(categoriesKey, () => getCategories(locale.value), {
@@ -47,11 +47,48 @@ async function switchLanguage(targetLocale: string, event: MouseEvent) {
   event.preventDefault()
   closeMenu()
 
+  let alternates: Record<string, string> | undefined
+  const normalizedPath = route.path.replace(/^\/[^/]+(?=\/|$)/, '') || '/'
+
+  if (normalizedPath.startsWith('/blog/')) {
+    const slug = typeof route.params.slug === 'string' ? route.params.slug : null
+    if (slug) {
+      try {
+        const post = await getPost(locale.value, slug)
+        if (post.alternates && Object.keys(post.alternates).length) {
+          alternates = Object.fromEntries(
+            Object.entries(post.alternates).map(([lang, alternateSlug]) => [lang, localePath(`/blog/${alternateSlug}`, lang)]),
+          )
+        }
+      }
+      catch {
+        alternates = undefined
+      }
+    }
+  }
+
+  if (normalizedPath === '/about-blog' || normalizedPath === '/about-me') {
+    const pageSlug = normalizedPath.slice(1)
+    try {
+      const page = await getPage(locale.value, pageSlug)
+      if (page.alternates && Object.keys(page.alternates).length) {
+        alternates = Object.fromEntries(
+          Object.keys(page.alternates).map(lang => [lang, localePath(`/${pageSlug}`, lang)]),
+        )
+      }
+    }
+    catch {
+      alternates = alternates || undefined
+    }
+  }
+
   const destination = await resolveLocaleSwitchPath({
     currentPath: route.path,
     routeParams: route.params as Record<string, string | string[] | undefined>,
     sameRoutePath: switchLocalePath(targetLocale),
     fallbackPath: localePath('/', targetLocale),
+    targetLocale,
+    alternates,
   })
 
   await navigateTo(destination)

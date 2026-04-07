@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   <channel>
     <title>TECH.md</title>
     <link>${siteUrl}/${lang}</link>
-    <description>TECH.md — A blog powered by Notion</description>
+    <description>TECH.md is a multilingual Notion-powered tech blog focused on clear writing, practical insights, and curated developer content.</description>
     <language>${lang}</language>
     <atom:link href="${siteUrl}/rss.xml?lang=${lang}" rel="self" type="application/rss+xml"/>
 ${items}

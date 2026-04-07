@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+#### Frontend
+
+- Added a shared SEO composable for canonical URLs, `hreflang`, Open Graph, Twitter cards,
+  JSON-LD, and TECH.md-specific social fallback handling
+- Added a repo-level default social card at `frontend/public/social/default-social-card.png`
+- Added runtime `robots.txt` generation derived from `NUXT_PUBLIC_SITE_URL`
+- Added frontend SEO tests covering canonical links, social metadata, and HTML summaries
+
+#### Documentation
+
+- Added `docs/notion-seo-manual-setup.md` with the manual Notion steps required to backfill
+  `Translation Key`, `Meta Description`, and `Social Image` for TECH.md
+
+### Changed
+
+#### Backend
+
+- Extended post and page API responses with `translation_key`, `meta_description`,
+  `social_image`, `last_edited_time`, and localized `alternates` mappings for SEO-aware pages
+- Added case-insensitive Notion property resolution for `Translation Key` to tolerate cloned
+  databases with inconsistent casing
+
+#### Frontend
+
+- Upgraded homepage, post detail, static pages, category pages, and tag pages to emit canonical
+  metadata and structured data using the shared SEO layer
+- Updated the language switcher to use backend-provided alternates for posts and static pages
+- Upgraded sitemap generation to use runtime site URLs, Notion freshness metadata, and post/page
+  alternate locale links
+
+#### Documentation
+
+- Updated Notion setup documentation to include the new SEO properties required by the codebase
+
+### Fixed
+
+#### Infrastructure
+
+- Enabled backend dev dependency installation in the Docker dev stack so `make test-backend`
+  works with the local development image
+
+#### Frontend
+
+- Replaced the stale static `robots.txt` file that still referenced the Gaming Blog domain with a
+  runtime route that always points to the correct TECH.md sitemap
+
 ## [1.0.2] - 2026-03-27
 
 ### Fixed
