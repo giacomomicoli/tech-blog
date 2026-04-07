@@ -8,8 +8,8 @@
 
 | Layer | Framework | Runner | Count |
 |-------|-----------|--------|-------|
-| Backend | pytest + pytest-asyncio + fakeredis | `make test-backend` | 74 tests |
-| Frontend | vitest + @vue/test-utils + happy-dom | `make test-frontend` | 22 tests |
+| Backend | pytest + pytest-asyncio + fakeredis | `make test-backend` | 101 tests |
+| Frontend | vitest + @nuxt/test-utils + happy-dom | `make test-frontend` | 47 tests |
 | Linting | ruff (check + format) | `make lint` | — |
 
 All tests run inside Docker containers to ensure consistent environments.
@@ -96,12 +96,12 @@ def _mock_blocks()
 | Class | Tests | What It Covers |
 |-------|-------|---------------|
 | `TestListPosts` | 7 | List, empty, pagination, tag filter, category filter, default lang, language in response |
-| `TestGetPost` | 2 | Full post fetch, 404 on missing slug |
+| `TestGetPost` | 2 | Full post fetch with SEO metadata/alternates, 404 on missing slug |
 | `TestCategories` | 1 | Sorted unique categories |
 | `TestTags` | 1 | Sorted unique tags |
 | `TestHealth` | 1 | Health check endpoint |
-| `TestPropertyExtraction` | 4 | Null category, empty tags, featured filter, null date |
-| `TestStaticPages` | 5 | About blog, about me, slug not found, DB not configured, blocks not found |
+| `TestPropertyExtraction` | 6 | Null category, empty tags, featured filter, null date, SEO fallback fields, Translation Key casing |
+| `TestStaticPages` | 6 | About blog, about me, page alternates, slug not found, DB not configured, blocks not found |
 
 **Mocking pattern**: All API tests use `@patch("src.api.posts.notion_client")` to mock the
 Notion client. For database queries, replace `mock_client.query_database` with an async
@@ -143,11 +143,11 @@ Uses `fakeredis` for real Redis operations without a running Redis server.
 
 **Key pattern examples tested**:
 ```python
-posts_list_key("it")                              → "blog:it:posts:all:1"
-posts_list_key("en", tag="python")                → "blog:en:posts:tag:python:1"
-posts_list_key("it", category="Tech")             → "blog:it:posts:cat:Tech:1"
-posts_list_key("it", category="Tech", page=2)     → "blog:it:posts:cat:Tech:2"
-posts_list_key("it", featured=True)               → "blog:it:posts:all:featured:True:1"
+posts_list_key("it")                              → "blog:it:posts:all:1:10"
+posts_list_key("en", tag="python")                → "blog:en:posts:tag:python:1:10"
+posts_list_key("it", category="Tech")             → "blog:it:posts:cat:Tech:1:10"
+posts_list_key("it", category="Tech", page=2)     → "blog:it:posts:cat:Tech:2:10"
+posts_list_key("it", featured=True)               → "blog:it:posts:all:featured:True:1:10"
 post_key("it", "my-post")                         → "blog:it:posts:my-post"
 page_key("it", "about-blog")                      → "blog:it:page:about-blog"
 categories_key("it")                              → "blog:it:categories"
@@ -199,12 +199,12 @@ def _block(block_type, rich_text_items=None, block_id="blk1", color="default",
 
 ### Configuration
 
-Vitest configured in `nuxt.config.ts` or `vitest.config.ts`. Uses `happy-dom` as the DOM
-implementation (lighter than jsdom).
+Vitest is configured via `frontend/vitest.config.ts`. Uses Nuxt's test environment with
+`happy-dom` under the hood.
 
 ### Test Files
 
-All in `frontend/tests/components/`:
+Frontend tests live in `frontend/tests/components/` and `frontend/tests/composables/`.
 
 #### `PostCard.test.ts`
 
@@ -231,6 +231,20 @@ Tests the TableOfContents component:
 - Applies `.toc-level-2` and `.toc-level-3` classes
 - Renders nothing when entries array is empty
 
+#### `useLocaleSwitch.test.ts`
+
+Tests locale-switch fallback behavior for dynamic routes and verifies that explicit alternate
+paths win when the backend provides them.
+
+#### `useSeo.test.ts`
+
+Tests the shared SEO composable:
+- Canonical link generation from runtime `siteUrl`
+- Alternate link generation including `x-default`
+- Open Graph / Twitter metadata defaults
+- Article-specific metadata (`article:published_time`, `article:modified_time`, tags)
+- Conservative HTML summary fallback for static pages
+
 ### Test Patterns
 
 ```typescript
@@ -253,7 +267,7 @@ check the rendered `<a>` tags.
 
 ### Adding New Frontend Tests
 
-1. Place test file in `frontend/tests/components/`
+1. Place test file in `frontend/tests/components/` or `frontend/tests/composables/`
 2. Name it `{ComponentName}.test.ts`
 3. Use `@vue/test-utils` `mount()` with props
 4. Stub NuxtLink and other Nuxt components as needed
@@ -298,6 +312,6 @@ cd backend && uvx ruff format src/            # Auto-format code
 
 When making changes:
 1. All 72 backend tests must pass: `make test-backend`
-2. All 22 frontend tests must pass: `make test-frontend`
+2. All 47 frontend tests must pass: `make test-frontend`
 3. `ruff check` must pass with no errors: `make lint`
 4. New features should include tests following the patterns above

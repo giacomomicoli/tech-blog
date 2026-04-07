@@ -37,14 +37,24 @@ def _make_page(
     hero_position: int | None = None,
     top: bool = False,
     related_post_ids: list[str] | None = None,
+    meta_description: str | None = None,
+    social_image: str | None = None,
+    translation_key: str | None = None,
+    translation_key_property_name: str = "Translation Key",
+    last_edited_time: str = "2026-02-05T10:00:00.000Z",
 ) -> dict:
     """Build a mock Notion page object."""
     return {
         "id": page_id,
+        "last_edited_time": last_edited_time,
         "properties": {
             "Name": {"type": "title", "title": [{"plain_text": title}]},
             "Slug": {"type": "rich_text", "rich_text": [{"plain_text": slug}]},
             "Excerpt": {"type": "rich_text", "rich_text": [{"plain_text": excerpt}]},
+            "Meta Description": {
+                "type": "rich_text",
+                "rich_text": [{"plain_text": meta_description}] if meta_description else [],
+            },
             "Category": {"type": "select", "select": {"name": category} if category else None},
             "Tags": {
                 "type": "multi_select",
@@ -56,6 +66,7 @@ def _make_page(
             },
             "Published": {"type": "checkbox", "checkbox": published},
             "Cover": {"type": "url", "url": None},
+            "Social Image": {"type": "url", "url": social_image},
             "Author": {"type": "rich_text", "rich_text": [{"plain_text": author}]},
             "Language": {"type": "select", "select": {"name": language}},
             "Hero Position": {"type": "number", "number": hero_position},
@@ -63,6 +74,10 @@ def _make_page(
             "Related Posts": {
                 "type": "relation",
                 "relation": [{"id": rid} for rid in (related_post_ids or [])],
+            },
+            translation_key_property_name: {
+                "type": "rich_text",
+                "rich_text": [{"plain_text": translation_key}] if translation_key else [],
             },
         },
     }
@@ -168,7 +183,26 @@ class TestGetPost:
     @patch("src.api.posts.notion_client")
     def test_get_post(self, mock_client, client):
         async def mock_query(*args, **kwargs):
-            yield _make_page("p1", "First Post", "first-post")
+            filter_props = {
+                condition.get("property") for condition in kwargs.get("filter", {}).get("and", [])
+            }
+            if "Slug" in filter_props:
+                yield _make_page(
+                    "p1",
+                    "First Post",
+                    "first-post",
+                    meta_description="SEO description",
+                    social_image="https://example.com/social.jpg",
+                    translation_key="first-post",
+                )
+                return
+
+            yield _make_page(
+                "p1-it", "First Post IT", "primo-post", language="it", translation_key="first-post"
+            )
+            yield _make_page(
+                "p1-en", "First Post EN", "first-post", language="en", translation_key="first-post"
+            )
 
         mock_client.query_database = mock_query
         mock_client.get_blocks = AsyncMock(return_value=_mock_blocks())
@@ -182,6 +216,11 @@ class TestGetPost:
         assert "content_html" in data
         assert "table_of_contents" in data
         assert data["reading_time"] >= 1
+        assert data["meta_description"] == "SEO description"
+        assert data["social_image"] == "https://example.com/social.jpg"
+        assert data["translation_key"] == "first-post"
+        assert data["last_edited_time"] == "2026-02-05T10:00:00.000Z"
+        assert data["alternates"] == {"it": "primo-post", "en": "first-post"}
 
     @patch("src.api.posts.notion_client")
     def test_get_post_not_found(self, mock_client, client):
@@ -302,6 +341,41 @@ class TestPropertyExtraction:
         resp = client.get("/api/posts?lang=it")
         data = resp.json()
         assert data["posts"][0]["top"] is True
+
+    @patch("src.api.posts.notion_client")
+    def test_meta_description_falls_back_to_excerpt(self, mock_client, client):
+        async def mock_query(*args, **kwargs):
+            yield _make_page(meta_description=None, excerpt="Excerpt fallback")
+
+        mock_client.query_database = mock_query
+        resp = client.get("/api/posts?lang=it")
+        data = resp.json()
+        assert data["posts"][0]["meta_description"] == "Excerpt fallback"
+
+    @patch("src.api.posts.notion_client")
+    def test_translation_key_case_insensitive_lookup(self, mock_client, client):
+        async def mock_query(*args, **kwargs):
+            filter_props = {
+                condition.get("property") for condition in kwargs.get("filter", {}).get("and", [])
+            }
+            if "Slug" in filter_props:
+                yield _make_page(
+                    slug="case-post",
+                    translation_key="shared-key",
+                    translation_key_property_name="translation key",
+                )
+                return
+
+            yield _make_page(slug="case-post", language="it", translation_key="shared-key")
+            yield _make_page(slug="case-post-en", language="en", translation_key="shared-key")
+
+        mock_client.query_database = mock_query
+        mock_client.get_blocks = AsyncMock(return_value=_mock_blocks())
+
+        resp = client.get("/api/posts/case-post?lang=it")
+        data = resp.json()
+        assert data["translation_key"] == "shared-key"
+        assert data["alternates"] == {"it": "case-post", "en": "case-post-en"}
 
     @patch("src.api.posts.notion_client")
     def test_hero_position_null(self, mock_client, client):
@@ -468,14 +542,29 @@ def _make_static_page(
     title: str = "About",
     slug: str = "about-blog",
     language: str = "it",
+    meta_description: str | None = None,
+    social_image: str | None = None,
+    translation_key: str | None = None,
+    translation_key_property_name: str = "Translation Key",
+    last_edited_time: str = "2026-02-05T10:00:00.000Z",
 ) -> dict:
     """Build a mock Notion page object for the Pages database."""
     return {
         "id": page_id,
+        "last_edited_time": last_edited_time,
         "properties": {
             "Name": {"type": "title", "title": [{"plain_text": title}]},
             "Slug": {"type": "rich_text", "rich_text": [{"plain_text": slug}]},
             "Language": {"type": "select", "select": {"name": language}},
+            "Meta Description": {
+                "type": "rich_text",
+                "rich_text": [{"plain_text": meta_description}] if meta_description else [],
+            },
+            "Social Image": {"type": "url", "url": social_image},
+            translation_key_property_name: {
+                "type": "rich_text",
+                "rich_text": [{"plain_text": translation_key}] if translation_key else [],
+            },
         },
     }
 
@@ -485,7 +574,34 @@ class TestStaticPages:
     @patch("src.api.posts.notion_client")
     def test_get_about_blog_page(self, mock_client, mock_settings, client):
         async def mock_query(*args, **kwargs):
-            yield _make_static_page("page-abc", "About This Blog", "about-blog")
+            filter_props = {
+                condition.get("property") for condition in kwargs.get("filter", {}).get("and", [])
+            }
+            if "Slug" in filter_props:
+                yield _make_static_page(
+                    "page-abc",
+                    "About This Blog",
+                    "about-blog",
+                    meta_description="About description",
+                    social_image="https://example.com/about.jpg",
+                    translation_key="about-blog",
+                )
+                return
+
+            yield _make_static_page(
+                "page-it",
+                "About This Blog",
+                "about-blog",
+                language="it",
+                translation_key="about-blog",
+            )
+            yield _make_static_page(
+                "page-en",
+                "About This Blog",
+                "about-blog",
+                language="en",
+                translation_key="about-blog",
+            )
 
         mock_settings.notion_pages_data_source_id = "ds-pages-123"
         mock_settings.parsed_locales = ["it", "en"]
@@ -496,9 +612,15 @@ class TestStaticPages:
         resp = client.get("/api/pages/about-blog?lang=it")
         assert resp.status_code == 200
         data = resp.json()
+        assert data["id"] == "page-abc"
         assert data["slug"] == "about-blog"
         assert data["title"] == "About This Blog"
         assert "content_html" in data
+        assert data["meta_description"] == "About description"
+        assert data["social_image"] == "https://example.com/about.jpg"
+        assert data["translation_key"] == "about-blog"
+        assert data["last_edited_time"] == "2026-02-05T10:00:00.000Z"
+        assert data["alternates"] == {"it": "about-blog", "en": "about-blog"}
 
     @patch("src.api.posts.settings")
     @patch("src.api.posts.notion_client")
@@ -517,6 +639,43 @@ class TestStaticPages:
         data = resp.json()
         assert data["slug"] == "about-me"
         assert data["title"] == "About Me"
+
+    @patch("src.api.posts.settings")
+    @patch("src.api.posts.notion_client")
+    def test_get_page_translation_key_case_insensitive_lookup(
+        self, mock_client, mock_settings, client
+    ):
+        async def mock_query(*args, **kwargs):
+            filter_props = {
+                condition.get("property") for condition in kwargs.get("filter", {}).get("and", [])
+            }
+            if "Slug" in filter_props:
+                yield _make_static_page(
+                    "page-abc",
+                    "About This Blog",
+                    "about-blog",
+                    translation_key="about-blog",
+                    translation_key_property_name="translation key",
+                )
+                return
+
+            yield _make_static_page(
+                "page-it", "About", "about-blog", language="it", translation_key="about-blog"
+            )
+            yield _make_static_page(
+                "page-en", "About", "about-blog", language="en", translation_key="about-blog"
+            )
+
+        mock_settings.notion_pages_data_source_id = "ds-pages-123"
+        mock_settings.parsed_locales = ["it", "en"]
+        mock_settings.default_locale = "it"
+        mock_client.query_database = mock_query
+        mock_client.get_blocks = AsyncMock(return_value=_mock_blocks())
+
+        resp = client.get("/api/pages/about-blog?lang=it")
+        data = resp.json()
+        assert data["translation_key"] == "about-blog"
+        assert data["alternates"] == {"it": "about-blog", "en": "about-blog"}
 
     @patch("src.api.posts.settings")
     @patch("src.api.posts.notion_client")

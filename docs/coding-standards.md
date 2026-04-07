@@ -179,22 +179,19 @@ Cache keys for `useAsyncData` should be descriptive, unique, and include the loc
 ### SEO / Meta
 
 ```typescript
-// Homepage: override template to show bare title
-useHead({ title: 'TECH.md', titleTemplate: '' })
+const { applySeo } = useSeo()
 
-// Subpages: just set title (template adds " | TECH.md")
-useHead({ title: post.value?.title })
-
-// Post pages: full OG/Twitter meta
-useSeoMeta({
-    description: post.value?.excerpt,
-    ogTitle: `${post.value.title} | TECH.md`,
-    ogDescription: post.value?.excerpt,
-    ogImage: post.value?.cover_image,
-    ogType: 'article',
-    twitterCard: 'summary_large_image',
+applySeo({
+    title: post.value?.title || 'TECH.md',
+    description: post.value?.meta_description || post.value?.excerpt,
+    path: `/${locale.value}/blog/${post.value?.slug}`,
+    image: post.value?.social_image || post.value?.cover_image,
+    type: 'article',
 })
 ```
+
+Use `useSeo()` for page-level canonical links, `hreflang`, Open Graph, Twitter metadata, and
+structured data instead of hand-assembling tags in each page.
 
 ### Error Handling
 

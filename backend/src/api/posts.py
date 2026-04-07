@@ -39,6 +39,24 @@ def _get_plain_text(prop: dict) -> str:
     return ""
 
 
+def _find_property_name(props: dict, desired_name: str) -> str | None:
+    """Resolve a property name, tolerating case-only differences."""
+    if desired_name in props:
+        return desired_name
+
+    desired_lower = desired_name.lower()
+    for name in props:
+        if name.lower() == desired_lower:
+            return name
+
+    return None
+
+
+def _get_property(props: dict, desired_name: str) -> dict:
+    actual_name = _find_property_name(props, desired_name)
+    return props.get(actual_name, {}) if actual_name else {}
+
+
 def _get_select(prop: dict) -> str | None:
     sel = prop.get("select")
     return sel.get("name") if sel else None
@@ -73,26 +91,89 @@ def _get_url(prop: dict) -> str | None:
 def _extract_post_meta(page: dict) -> dict:
     """Extract blog post metadata from a Notion page object."""
     props = page.get("properties", {})
-    title = _get_plain_text(props.get("Name", {}))
-    slug = _get_plain_text(props.get("Slug", {}))
-    excerpt = _get_plain_text(props.get("Excerpt", {}))
+    title = _get_plain_text(_get_property(props, "Name"))
+    slug = _get_plain_text(_get_property(props, "Slug"))
+    excerpt = _get_plain_text(_get_property(props, "Excerpt"))
+    translation_key = _get_plain_text(_get_property(props, "Translation Key")) or None
+    meta_description = _get_plain_text(_get_property(props, "Meta Description")) or excerpt or None
 
     return {
         "id": page.get("id", ""),
         "slug": slug,
         "title": title,
         "excerpt": excerpt,
-        "category": _get_select(props.get("Category", {})),
-        "tags": _get_multi_select(props.get("Tags", {})),
-        "published_date": _get_date(props.get("Published Date", {})),
-        "cover_image": _get_url(props.get("Cover", {})),
-        "author": _get_plain_text(props.get("Author", {})),
-        "featured": _get_checkbox(props.get("Featured", {})),
-        "language": _get_select(props.get("Language", {})) or settings.default_locale,
-        "hero_position": _get_number(props.get("Hero Position", {})),
-        "top": _get_checkbox(props.get("Top", {})),
-        "related_post_ids": _get_relation_ids(props.get("Related Posts", {})),
+        "category": _get_select(_get_property(props, "Category")),
+        "tags": _get_multi_select(_get_property(props, "Tags")),
+        "published_date": _get_date(_get_property(props, "Published Date")),
+        "cover_image": _get_url(_get_property(props, "Cover")),
+        "social_image": _get_url(_get_property(props, "Social Image")),
+        "author": _get_plain_text(_get_property(props, "Author")),
+        "featured": _get_checkbox(_get_property(props, "Featured")),
+        "language": _get_select(_get_property(props, "Language")) or settings.default_locale,
+        "hero_position": _get_number(_get_property(props, "Hero Position")),
+        "top": _get_checkbox(_get_property(props, "Top")),
+        "related_post_ids": _get_relation_ids(_get_property(props, "Related Posts")),
+        "translation_key": translation_key,
+        "meta_description": meta_description,
+        "last_edited_time": page.get("last_edited_time"),
     }
+
+
+def _extract_page_meta(page: dict) -> dict:
+    """Extract static page metadata from a Notion page object."""
+    props = page.get("properties", {})
+
+    return {
+        "id": page.get("id", ""),
+        "slug": _get_plain_text(_get_property(props, "Slug")),
+        "title": _get_plain_text(_get_property(props, "Name")),
+        "language": _get_select(_get_property(props, "Language")) or settings.default_locale,
+        "translation_key": _get_plain_text(_get_property(props, "Translation Key")) or None,
+        "meta_description": _get_plain_text(_get_property(props, "Meta Description")) or None,
+        "social_image": _get_url(_get_property(props, "Social Image")),
+        "last_edited_time": page.get("last_edited_time"),
+    }
+
+
+async def _resolve_alternates(
+    page: dict,
+    *,
+    data_source_id: str | None = None,
+    published_only: bool = False,
+) -> dict[str, str]:
+    """Resolve localized sibling entries linked by Translation Key."""
+    props = page.get("properties", {})
+    translation_key_name = _find_property_name(props, "Translation Key")
+    translation_key = _get_plain_text(_get_property(props, "Translation Key"))
+
+    if not translation_key_name or not translation_key:
+        return {}
+
+    conditions: list[dict] = [
+        {"property": translation_key_name, "rich_text": {"equals": translation_key}},
+    ]
+    if published_only:
+        conditions.insert(0, {"property": "Published", "checkbox": {"equals": True}})
+
+    db_filter = {"and": conditions} if len(conditions) > 1 else conditions[0]
+    alternates: dict[str, str] = {}
+
+    async for alternate_page in notion_client.query_database(
+        data_source_id=data_source_id,
+        filter=db_filter,
+    ):
+        alternate_props = alternate_page.get("properties", {})
+        alternate_slug = _get_plain_text(_get_property(alternate_props, "Slug"))
+        alternate_language = (
+            _get_select(_get_property(alternate_props, "Language")) or settings.default_locale
+        )
+        if alternate_slug:
+            alternates[alternate_language] = alternate_slug
+
+    if len(alternates) < 2:
+        return {}
+
+    return alternates
 
 
 def _estimate_reading_time(blocks: list[dict]) -> int:
@@ -130,7 +211,14 @@ async def list_posts(
 ):
     """List published blog posts with optional filtering."""
     lang = _validate_lang(lang)
-    cache_k = posts_list_key(lang=lang, tag=tag, category=category, featured=featured, page=page)
+    cache_k = posts_list_key(
+        lang=lang,
+        tag=tag,
+        category=category,
+        featured=featured,
+        page=page,
+        limit=limit,
+    )
     cached = await cache_get(cache_k)
     if cached:
         return cached
@@ -273,6 +361,10 @@ async def get_post(slug: str, lang: str = Query("")):
     content_html = render_blocks(blocks)
     toc = extract_toc(blocks)
     reading_time = _estimate_reading_time(blocks)
+    try:
+        alternates = await _resolve_alternates(page_obj, published_only=True)
+    except NotionAPIError:
+        alternates = {}
 
     # Resolve related posts
     related_posts: list[dict] = []
@@ -297,6 +389,7 @@ async def get_post(slug: str, lang: str = Query("")):
         "table_of_contents": toc,
         "reading_time": reading_time,
         "related_posts": related_posts,
+        "alternates": alternates,
     }
     await cache_set(cache_k, result)
     return result
@@ -319,7 +412,7 @@ async def list_categories(lang: str = Query("")):
         ]
     }
     async for page_obj in notion_client.query_database(filter=db_filter):
-        cat = _get_select(page_obj.get("properties", {}).get("Category", {}))
+        cat = _get_select(_get_property(page_obj.get("properties", {}), "Category"))
         if cat:
             categories.add(cat)
 
@@ -345,7 +438,7 @@ async def list_tags(lang: str = Query("")):
         ]
     }
     async for page_obj in notion_client.query_database(filter=db_filter):
-        for tag in _get_multi_select(page_obj.get("properties", {}).get("Tags", {})):
+        for tag in _get_multi_select(_get_property(page_obj.get("properties", {}), "Tags")):
             tags.add(tag)
 
     result = sorted(tags)
@@ -395,14 +488,21 @@ async def get_static_page(page_slug: str, lang: str = Query("")):
     except NotionNotFound:
         raise HTTPException(status_code=404, detail="Page content not found")
 
-    props = page_obj.get("properties", {})
-    title = _get_plain_text(props.get("Name", {}))
+    meta = _extract_page_meta(page_obj)
     content_html = render_blocks(blocks)
+    try:
+        alternates = await _resolve_alternates(
+            page_obj,
+            data_source_id=settings.notion_pages_data_source_id,
+        )
+    except NotionAPIError:
+        alternates = {}
 
     result = {
-        "slug": page_slug,
-        "title": title,
+        **meta,
+        "slug": meta["slug"] or page_slug,
         "content_html": content_html,
+        "alternates": alternates,
     }
     await cache_set(cache_k, result)
     return result

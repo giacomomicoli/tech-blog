@@ -15,18 +15,22 @@ from src.cache import (
 
 # ── Key helpers ────────────────────────────────────────────
 
+
 class TestKeyHelpers:
     def test_posts_list_key_default(self):
-        assert posts_list_key(lang="it") == "blog:it:posts:all:1"
+        assert posts_list_key(lang="it") == "blog:it:posts:all:1:10"
 
     def test_posts_list_key_with_tag(self):
-        assert posts_list_key(lang="en", tag="python") == "blog:en:posts:tag:python:1"
+        assert posts_list_key(lang="en", tag="python") == "blog:en:posts:tag:python:1:10"
 
     def test_posts_list_key_with_category(self):
-        assert posts_list_key(lang="it", category="Tech") == "blog:it:posts:cat:Tech:1"
+        assert posts_list_key(lang="it", category="Tech") == "blog:it:posts:cat:Tech:1:10"
 
     def test_posts_list_key_with_page(self):
-        assert posts_list_key(lang="it", page=3) == "blog:it:posts:all:3"
+        assert posts_list_key(lang="it", page=3) == "blog:it:posts:all:3:10"
+
+    def test_posts_list_key_with_limit(self):
+        assert posts_list_key(lang="it", limit=50) == "blog:it:posts:all:1:50"
 
     def test_post_key(self):
         assert post_key("en", "my-slug") == "blog:en:posts:my-slug"
@@ -42,6 +46,7 @@ class TestKeyHelpers:
 
 
 # ── Cache operations ───────────────────────────────────────
+
 
 class TestCacheOperations:
     async def test_set_and_get(self):

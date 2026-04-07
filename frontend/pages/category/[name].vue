@@ -4,20 +4,59 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { locale } = useI18n()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const localePath = useLocalePath()
-const category = route.params.name as string
+const category = computed(() => route.params.name as string)
 const { getPosts } = useApi()
+const {
+  applySeo,
+  addStructuredData,
+  buildBreadcrumbSchema,
+  buildCollectionPageSchema,
+  defaultSocialImage,
+  siteName,
+} = useSeo()
 const page = ref(1)
 
 const { data, status } = await useAsyncData(
-  `category-${route.fullPath}`,
-  () => getPosts(locale.value, { category, page: page.value }),
-  { watch: [page] },
+  `category-${locale.value}-${category.value}`,
+  () => getPosts(locale.value, { category: category.value, page: page.value }),
+  { watch: [page, locale, category] },
 )
 
-useHead({ title: category })
+const pageTitle = computed(() => category.value)
+const pageDescription = computed(() => (
+  locale.value === 'it'
+    ? `Articoli, guide e approfondimenti raccolti nella categoria ${category.value} su TECH.md.`
+    : `Articles, guides, and long-form writing collected under the ${category.value} category on TECH.md.`
+))
+const pagePath = computed(() => `/${locale.value}/category/${category.value}`)
+const pageImage = computed(() => (
+  data.value?.posts?.[0]?.social_image
+  || data.value?.posts?.[0]?.cover_image
+  || defaultSocialImage
+))
+
+applySeo(() => ({
+  title: pageTitle.value,
+  description: pageDescription.value,
+  path: pagePath.value,
+  image: pageImage.value,
+  imageAlt: pageTitle.value,
+}))
+
+addStructuredData(() => ([
+  buildCollectionPageSchema({
+    name: pageTitle.value,
+    description: pageDescription.value,
+    path: pagePath.value,
+    image: pageImage.value,
+  }),
+  buildBreadcrumbSchema([
+    { name: siteName, path: `/${locale.value}` },
+    { name: pageTitle.value, path: pagePath.value },
+  ]),
+]), 'category')
 </script>
 
 <template>

@@ -1,7 +1,14 @@
 <script setup lang="ts">
-const { locale } = useI18n()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const { getPosts, getHeroPosts, getTopPosts } = useApi()
+const {
+  applySeo,
+  addStructuredData,
+  buildBreadcrumbSchema,
+  buildCollectionPageSchema,
+  defaultSocialImage,
+  siteName,
+} = useSeo()
 const page = ref(1)
 
 const { data, status } = await useAsyncData(`posts-${locale.value}`, () => getPosts(locale.value, { page: page.value }), {
@@ -16,7 +23,51 @@ const { data: topData } = await useAsyncData(`top-posts-${locale.value}`, () => 
   watch: [locale],
 })
 
-useHead({ title: 'TECH.md', titleTemplate: '' })
+const pageTitle = siteName
+const pageDescription = computed(() => {
+  if (heroData.value?.[0]?.meta_description) {
+    return heroData.value[0].meta_description
+  }
+
+  if (heroData.value?.[0]?.excerpt) {
+    return heroData.value[0].excerpt
+  }
+
+  return locale.value === 'it'
+    ? 'TECH.md raccoglie articoli tecnici, tutorial, riflessioni e contenuti curati dal mondo dello sviluppo software e della cultura digitale.'
+    : 'TECH.md gathers technical articles, tutorials, essays, and curated writing about software development and digital culture.'
+})
+const homepageAlternates = computed(() => ({
+  it: '/it',
+  en: '/en',
+}))
+const homepageImage = computed(() => (
+  heroData.value?.[0]?.social_image
+  || heroData.value?.[0]?.cover_image
+  || defaultSocialImage
+))
+
+applySeo(() => ({
+  title: pageTitle,
+  description: pageDescription.value,
+  path: `/${locale.value}`,
+  image: homepageImage.value,
+  imageAlt: pageTitle,
+  noTemplate: true,
+  alternates: homepageAlternates.value,
+}))
+
+addStructuredData(() => ([
+  buildCollectionPageSchema({
+    name: pageTitle,
+    description: pageDescription.value,
+    path: `/${locale.value}`,
+    image: homepageImage.value,
+  }),
+  buildBreadcrumbSchema([
+    { name: pageTitle, path: `/${locale.value}` },
+  ]),
+]), 'homepage')
 
 function nextPage() {
   if (data.value?.has_more) page.value++
@@ -29,6 +80,7 @@ function prevPage() {
 
 <template>
   <div>
+    <h1 class="sr-only">{{ pageTitle }}</h1>
     <HeroSection v-if="heroData?.length" :posts="heroData" />
 
     <div class="content-layout">
@@ -62,6 +114,18 @@ function prevPage() {
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .content-layout {
   display: grid;
   grid-template-columns: 1fr;

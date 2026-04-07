@@ -4,20 +4,59 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { locale } = useI18n()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const localePath = useLocalePath()
-const tag = route.params.name as string
+const tag = computed(() => route.params.name as string)
 const { getPosts } = useApi()
+const {
+  applySeo,
+  addStructuredData,
+  buildBreadcrumbSchema,
+  buildCollectionPageSchema,
+  defaultSocialImage,
+  siteName,
+} = useSeo()
 const page = ref(1)
 
 const { data, status } = await useAsyncData(
-  `tag-${route.fullPath}`,
-  () => getPosts(locale.value, { tag, page: page.value }),
-  { watch: [page] },
+  `tag-${locale.value}-${tag.value}`,
+  () => getPosts(locale.value, { tag: tag.value, page: page.value }),
+  { watch: [page, locale, tag] },
 )
 
-useHead({ title: `#${tag}` })
+const pageTitle = computed(() => `#${tag.value}`)
+const pageDescription = computed(() => (
+  locale.value === 'it'
+    ? `Articoli di TECH.md contrassegnati con il tag ${tag.value}.`
+    : `TECH.md articles tagged with ${tag.value}.`
+))
+const pagePath = computed(() => `/${locale.value}/tag/${tag.value}`)
+const pageImage = computed(() => (
+  data.value?.posts?.[0]?.social_image
+  || data.value?.posts?.[0]?.cover_image
+  || defaultSocialImage
+))
+
+applySeo(() => ({
+  title: pageTitle.value,
+  description: pageDescription.value,
+  path: pagePath.value,
+  image: pageImage.value,
+  imageAlt: pageTitle.value,
+}))
+
+addStructuredData(() => ([
+  buildCollectionPageSchema({
+    name: pageTitle.value,
+    description: pageDescription.value,
+    path: pagePath.value,
+    image: pageImage.value,
+  }),
+  buildBreadcrumbSchema([
+    { name: siteName, path: `/${locale.value}` },
+    { name: pageTitle.value, path: pagePath.value },
+  ]),
+]), 'tag')
 </script>
 
 <template>

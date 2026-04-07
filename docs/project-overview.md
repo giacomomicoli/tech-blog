@@ -11,7 +11,7 @@
 - **Footer text**: "© 2026 TECH.md Blog - FakeJack - Powered by Notion."
 - **Default domain**: `tech.fakejack.dev`
 - **SEO title**: "TECH.md" (global), appended as `{Page Title} | TECH.md` on subpages
-- **Meta description**: "TECH.md — A blog powered by Notion"
+- **Meta description**: "TECH.md is a multilingual Notion-powered tech blog focused on clear writing, practical insights, and curated developer content."
 
 These branding values are hardcoded in the frontend. Do not change them without explicit user request.
 
