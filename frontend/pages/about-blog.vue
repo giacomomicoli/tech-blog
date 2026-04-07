@@ -4,17 +4,60 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { locale } = useI18n()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const { getPage } = useApi()
+const {
+  applySeo,
+  addStructuredData,
+  buildBreadcrumbSchema,
+  buildWebPageSchema,
+  defaultSocialImage,
+  siteName,
+  summarizeHtml,
+} = useSeo()
 
-const { data: page, error } = await useAsyncData(`page-${route.fullPath}`, () => getPage(locale.value, 'about-blog'))
+const { data: page, error } = await useAsyncData(
+  `page-${locale.value}-about-blog`,
+  () => getPage(locale.value, 'about-blog'),
+  { watch: [locale] },
+)
 
 if (error.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found' })
 }
 
-useHead({ title: page.value?.title || t('nav.aboutBlog') })
+const pagePath = computed(() => `/${locale.value}/about-blog`)
+const pageDescription = computed(() => page.value?.meta_description || summarizeHtml(page.value?.content_html || ''))
+const pageAlternates = computed(() => {
+  const alternates = page.value?.alternates || {}
+
+  return Object.fromEntries(
+    Object.keys(alternates).map(lang => [lang, `/${lang}/about-blog`]),
+  )
+})
+
+applySeo(() => ({
+  title: page.value?.title || t('nav.aboutBlog'),
+  description: pageDescription.value,
+  path: pagePath.value,
+  image: page.value?.social_image || defaultSocialImage,
+  imageAlt: page.value?.title || t('nav.aboutBlog'),
+  alternates: Object.keys(pageAlternates.value).length ? pageAlternates.value : undefined,
+}))
+
+addStructuredData(() => ([
+  buildWebPageSchema({
+    type: 'AboutPage',
+    name: page.value?.title || t('nav.aboutBlog'),
+    description: pageDescription.value,
+    path: pagePath.value,
+    image: page.value?.social_image || defaultSocialImage,
+  }),
+  buildBreadcrumbSchema([
+    { name: siteName, path: `/${locale.value}` },
+    { name: page.value?.title || t('nav.aboutBlog'), path: pagePath.value },
+  ]),
+]), 'about-blog')
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-import type { Post, PostList } from '~/types/blog'
+import type { Post, PostList, StaticPage } from '~/types/blog'
 
 export function useApi() {
   const config = useRuntimeConfig()
@@ -54,8 +54,8 @@ export function useApi() {
     return fetchApi<Post[]>('/api/posts/top', { lang })
   }
 
-  async function getPage(lang: string, slug: string): Promise<{ slug: string; title: string; content_html: string }> {
-    return fetchApi(`/api/pages/${slug}`, { lang })
+  async function getPage(lang: string, slug: string): Promise<StaticPage> {
+    return fetchApi<StaticPage>(`/api/pages/${slug}`, { lang })
   }
 
   return { getPosts, getFeaturedPosts, getPost, getCategories, getTags, getHeroPosts, getTopPosts, getPage }

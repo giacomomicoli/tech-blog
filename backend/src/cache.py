@@ -37,11 +37,12 @@ def posts_list_key(
     category: str | None = None,
     featured: bool | None = None,
     page: int = 1,
+    limit: int = 10,
 ) -> str:
     suffix = f"tag:{tag}" if tag else f"cat:{category}" if category else "all"
     if featured is not None:
         suffix += f":featured:{featured}"
-    return _key(lang, "posts", suffix, str(page))
+    return _key(lang, "posts", suffix, str(page), str(limit))
 
 
 def post_key(lang: str, slug: str) -> str:
