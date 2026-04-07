@@ -2,6 +2,10 @@
 
 This document describes the required databases and properties in your Notion workspace.
 
+Use this file as the schema reference.
+For editorial backfill rules and post-deploy validation steps related to SEO, see
+`docs/notion-seo-manual-setup.md`.
+
 ## Finding Your Notion IDs
 
 This project requires several different Notion IDs. They look similar (all UUIDs) but serve different purposes and are found in different places.
@@ -137,6 +141,14 @@ The main database for blog posts.
 | Related Posts    | Relation     | Self-referencing relation to other posts in the same database. Shown on post detail page. |
 | Language         | Select       | Language code (e.g. `it`, `en`) — each post belongs to one language |
 
+### Recommended SEO Properties
+
+| Property Name    | Type      | Description |
+|------------------|-----------|-------------|
+| Translation Key  | Rich Text | Shared identifier across localized versions of the same post |
+| Meta Description | Rich Text | Optional SEO description override; falls back to `Excerpt` |
+| Social Image     | URL       | Optional social preview override for Open Graph / Twitter |
+
 ### Adding the Language Property
 
 1. Open your Notion posts database
@@ -192,6 +204,14 @@ A separate database for static content pages (About This Blog, About Me, etc.). 
 | Slug          | Rich Text | URL identifier — must match the frontend route slug |
 | Language      | Select    | Language code (e.g. `it`, `en`) — same options as Posts |
 
+### Recommended SEO Properties
+
+| Property Name    | Type      | Description |
+|------------------|-----------|-------------|
+| Translation Key  | Rich Text | Shared identifier across localized versions of the same page |
+| Meta Description | Rich Text | SEO description used for snippets and social previews |
+| Social Image     | URL       | Optional social preview override for Open Graph / Twitter |
+
 ### Setup Steps
 
 1. In Notion, create a new **full-page database** (e.g. inside your Blog root page)
@@ -214,6 +234,8 @@ Create entries in the Pages database for each language:
 | About Me          | about-me    | en       |
 
 Then open each entry and write the page content using Notion's editor. The content is rendered to HTML the same way as blog posts (all block types supported).
+
+Keep these built-in slugs identical across locales because the frontend routes are file-based and the SEO alternates assume stable page paths.
 
 The frontend routes `/{lang}/about-blog` and `/{lang}/about-me` fetch from `/api/pages/about-blog?lang={lang}` and `/api/pages/about-me?lang={lang}` respectively.
 

@@ -39,6 +39,7 @@ describe('useLocaleSwitch', () => {
         routeParams: { slug: 'test-post' },
         sameRoutePath: '/en/blog/test-post',
         fallbackPath: '/en',
+        targetLocale: 'en',
       })).resolves.toBe('/en')
     })
 
@@ -48,6 +49,7 @@ describe('useLocaleSwitch', () => {
         routeParams: { name: 'News' },
         sameRoutePath: '/en/category/News',
         fallbackPath: '/en',
+        targetLocale: 'en',
       })).resolves.toBe('/en')
 
       await expect(resolveLocaleSwitchPath({
@@ -55,6 +57,7 @@ describe('useLocaleSwitch', () => {
         routeParams: { name: 'python' },
         sameRoutePath: '/en/tag/python',
         fallbackPath: '/en',
+        targetLocale: 'en',
       })).resolves.toBe('/en')
     })
 
@@ -64,7 +67,22 @@ describe('useLocaleSwitch', () => {
         routeParams: {},
         sameRoutePath: '/en/about-me',
         fallbackPath: '/en',
+        targetLocale: 'en',
       })).resolves.toBe('/en/about-me')
+    })
+
+    it('uses explicit alternates when available', async () => {
+      await expect(resolveLocaleSwitchPath({
+        currentPath: '/it/blog/test-post',
+        routeParams: { slug: 'test-post' },
+        sameRoutePath: '/en/blog/test-post',
+        fallbackPath: '/en',
+        targetLocale: 'en',
+        alternates: {
+          it: '/it/blog/test-post',
+          en: '/en/blog/translated-post',
+        },
+      })).resolves.toBe('/en/blog/translated-post')
     })
   })
 })

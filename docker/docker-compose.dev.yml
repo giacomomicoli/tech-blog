@@ -12,6 +12,9 @@ services:
       - blog-net
 
   backend:
+    build:
+      args:
+        - INSTALL_DEV=true
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     env_file:
