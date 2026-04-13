@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-13
+
+### Fixed
+
+#### Frontend
+
+- Added the Google Search Console site verification meta tag to the global Nuxt head
+  configuration
+
 ## [1.1.0] - 2026-04-07
 
 ### Added
