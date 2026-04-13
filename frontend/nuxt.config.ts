@@ -54,6 +54,7 @@ export default defineNuxtConfig({
       titleTemplate: '%s | TECH.md',
       meta: [
         { name: 'description', content: 'TECH.md is a multilingual Notion-powered tech blog focused on clear writing, practical insights, and curated developer content.' },
+        { name: 'google-site-verification', content: 'wumxo5kVifwgIAumsygw_Qqu8Y2LQPuV7KKCgTczF6w' },
       ],
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
